@@ -1,3 +1,6 @@
+Deploy link (https://ai-life-companion-unified-daily-assistant.onrender.com/index.html)
+
+
 # AI For Everyday Life
 
 This repository contains a small full-stack app (static frontend + Express/MongoDB backend) for a personal AI assistant.
