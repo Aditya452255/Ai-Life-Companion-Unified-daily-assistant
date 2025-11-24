@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Life Companion Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .cards-grid .card { cursor:pointer; transition: transform 0.12s ease; }
+    .cards-grid .card:hover { transform: translateY(-4px); }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="mark">AI</div>
+      <div>
+        <div class="title">Life Companion</div>
+        <div class="subtitle">Unified daily assistant</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="expenses.html">💸 Expenses</a>
+      <a href="health.html">❤️ Health</a>
+      <a href="recipes.html">🍳 Recipes</a>
+      <a href="music.html">🎵 Music</a>
+      <a href="assistant.html">🗣️ Assistant</a>
+    </nav>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="topbar">
+      <input type="text" placeholder="Search recipes, expenses, ask anything...">
+       <div class="user-profile"></div>
+    </header>
+
+    <section class="hero">
+      <h1 id="greeting">Hey</h1>
+      <p>Your AI life companion at a glance.</p>
+      <div class="quick-cards">
+        <div class="card" id="dashboard-today-spend">Today's Spend: ₹0</div>
+        <div class="card" id="dashboard-week-spend">This Week: ₹0</div>
+      </div>
+    </section>
+
+    <section class="cards-grid">
+      <div class="card" id="card-expenses">Expenses Summary</div>
+      <div class="card" id="card-health">Health Overview</div>
+      <div class="card" id="card-recipes">Recipe Suggestions</div>
+    </section>
+
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // Dashboard dynamic behavior
+    (function(){
+      const API = '/api/expenses';
+      const todayEl = document.getElementById('dashboard-today-spend');
+      const weekEl = document.getElementById('dashboard-week-spend');
+
+      async function updateSpend(){
+        try{
+          const res = await fetch(API, { headers: getAuthHeader ? getAuthHeader() : {} });
+          if(!res.ok) throw new Error('Failed to fetch');
+          const items = await res.json();
+          const today = new Date().toDateString();
+          const last7 = new Date(); last7.setDate(last7.getDate()-6);
+          let todaySum = 0, weekSum = 0;
+          items.forEach(it=>{
+            const d = new Date(it.date);
+            if(d.toDateString() === today) todaySum += Number(it.amount||0);
+            if(d >= last7) weekSum += Number(it.amount||0);
+          });
+          todayEl.textContent = `Today's Spend: ₹${todaySum}`;
+          weekEl.textContent = `This Week: ₹${weekSum}`;
+        }catch(e){
+          // fallback: show 0 and don't break
+          todayEl.textContent = `Today's Spend: ₹0`;
+          weekEl.textContent = `This Week: ₹0`;
+          console.warn('Dashboard updateSpend failed', e);
+        }
+      }
+
+      // initial load
+      updateSpend();
+
+      // update dashboard greeting using auth.js helper
+      function updateGreeting(){
+        try{
+          const user = typeof getUser === 'function' ? getUser() : null;
+          const el = document.getElementById('greeting');
+          if(!el) return;
+          if(user && user.name){
+            let displayName = String(user.name || '').trim();
+            displayName = displayName.replace(/User$/i, '').trim();
+            if(displayName.indexOf(' ') !== -1) displayName = displayName.split(' ')[0];
+            el.textContent = `Hey ${displayName}`;
+          } else { el.textContent = 'Hey'; }
+        }catch(e){ console.warn('updateGreeting failed', e); }
+      }
+      updateGreeting();
+      // respond to login/logout in other tabs
+      window.addEventListener('storage', (e)=>{ if(e.key==='authUser' || e.key==='authToken'){ updateGreeting(); } });
+
+      // click handlers to activate sections
+      document.getElementById('card-expenses').addEventListener('click', ()=>{ location.href = 'expenses.html'; });
+      document.getElementById('card-health').addEventListener('click', ()=>{ location.href = 'health.html'; });
+      document.getElementById('card-recipes').addEventListener('click', ()=>{ location.href = 'recipes.html'; });
+
+      // refresh spend periodically (every 30s)
+      setInterval(updateSpend, 30000);
+    })();
+  </script>
+</body>
+</html>

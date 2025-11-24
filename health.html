@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Life Companion - Health</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* Animated Gradient Background */
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(270deg, #a1c4fd, #c2e9fb, #fbc2eb, #fad0c4, #ff9a9e);
+  background-size: 1000% 1000%;
+  animation: GradientBG 20s ease infinite;
+  display: flex;
+  color:black;
+}
+
+@keyframes GradientBG {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+/* Sidebar same as expenses.html */
+.sidebar {
+  width: 250px;
+  background: rgba(0,0,0,0.6);
+  color:black;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+  backdrop-filter: blur(8px);
+}
+.sidebar .logo { display:flex; align-items:center; margin-bottom:30px; }
+.sidebar .logo .mark { font-size:32px; font-weight:bold; margin-right:10px; color:#ffd700; }
+.sidebar .nav a { display:block; padding:12px; margin:10px 0; color:black; text-decoration:none; border-radius:8px; transition:0.3s; }
+.sidebar .nav a:hover, .sidebar .nav a.active{ background-color: rgba(0,0,0,0.1); transform:translateX(5px); }
+
+/* Main content */
+.main-content { flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:20px; }
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .topbar input { flex:1; padding:10px 15px; border-radius:25px; border:none; outline:none; margin-right:20px; }
+  .topbar .topbar-message { flex:1; padding:10px 15px; border-radius:25px; margin-right:20px; display:flex; align-items:center; color:black; background:rgba(255,255,255,0.06); }
+.topbar .user-profile { font-weight:bold; color:black; }
+
+/* Hero Cards */
+.hero { padding:20px; border-radius:15px; background: rgba(255,255,255,0.15); margin-bottom:20px; backdrop-filter:blur(5px); color:black; animation: fadeIn 1s ease-in-out; }
+.hero h1 { font-size:28px; margin-bottom:5px; }
+.hero p { margin-bottom:15px; }
+.hero .quick-cards { display:flex; gap:15px; }
+.hero .quick-cards .card { flex:1; background: rgba(255,255,255,0.25); padding:20px; border-radius:12px; text-align:center; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:0.3s; color:black; }
+.hero .quick-cards .card:hover{ transform:translateY(-5px); }
+
+/* Cards Grid */
+.cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+.cards-grid .card { background: rgba(255,255,255,0.2); padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2); color:black; transition:0.3s; }
+.cards-grid .card:hover{ transform:translateY(-5px); }
+.cards-grid input, .cards-grid select, .cards-grid button{ width:100%; padding:10px; margin:8px 0; border-radius:8px; border:none; outline:none; }
+.cards-grid button{ background:linear-gradient(135deg,#6C5CE7,#FD79A8); color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+.cards-grid button:hover{ transform:scale(1.05); }
+
+/* Smart Tips Box */
+#tips-box { background: rgba(0,0,0,0.1); padding:15px; border-radius:10px; min-height:50px; display:flex; align-items:center; animation:fadeIn 1s; color:black; }
+
+/* Chart container animation */
+#chart-container { max-height:0; overflow:hidden; transition: max-height 450ms cubic-bezier(.2,.8,.2,1), opacity 300ms ease; opacity:0; }
+#chart-container.expanded { max-height:600px; opacity:1; }
+.chart-toggle-btn { width:100%; padding:8px 12px; border-radius:8px; background:linear-gradient(90deg,#00B894,#6C5CE7); color:white; border:none; cursor:pointer; margin-bottom:10px; }
+
+/* Tips list styling */
+.tip-list { list-style:none; padding:0; margin:10px 0 0 0; }
+.tip-item { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding:8px; background:rgba(255,255,255,0.04); border-radius:8px; margin-bottom:8px; }
+.tip-text { flex:1; }
+.tip-actions { display:flex; gap:8px; }
+.tip-btn { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; font-size:12px; }
+.tip-btn.details { background:transparent; color:#333; border:1px solid rgba(0,0,0,0.08); }
+.tip-btn.done { background:#00B894; color:white; }
+.tip-done .tip-text { text-decoration:line-through; opacity:0.6; }
+
+/* Floating Voice Button */
+.voice-button { position:fixed; bottom:30px; right:30px; width:60px; height:60px; border-radius:50%; border:none; background:linear-gradient(135deg,#6C5CE7,#FD79A8); color:white; font-size:28px; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3); transition:transform 0.2s; }
+.voice-button:hover{ transform:scale(1.2); }
+
+@keyframes fadeIn { 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo"><div class="mark">AI</div><div><div class="title">Life Companion</div><div class="subtitle">Daily AI Helper</div></div></div>
+  <nav class="nav">
+    <a href="index.html">🏠 Dashboard</a>
+    <a href="expenses.html">💸 Expenses</a>
+    <a href="health.html" class="active">❤️ Health</a>
+    <a href="recipes.html">🍳 Recipes</a>
+    <a href="music.html">🎵 Music</a>
+    <a href="assistant.html">🗣️ Assistant</a>
+  </nav>
+</aside>
+
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-message">Track your day. Stay hydrated. Stay rested. Stay strong.</div>
+    <div class="user-profile"></div>
+  </header>
+
+  <section class="hero">
+    <h1>Health Tracker</h1>
+    <p>Monitor your daily water, sleep, and exercise habits.</p>
+    <div class="quick-cards">
+      <div class="card" id="water-card">Water: 0 Glasses</div>
+      <div class="card" id="sleep-card">Sleep: 0 hrs</div>
+      <div class="card" id="exercise-card">Exercise: 0 mins</div>
+    </div>
+  </section>
+
+  <section class="cards-grid">
+    <div class="card">
+      <h3>Log Your Health</h3>
+      <input type="number" id="water-input" placeholder="Glasses of Water">
+      <input type="number" id="sleep-input" placeholder="Sleep Hours">
+      <input type="number" id="exercise-input" placeholder="Exercise Minutes">
+      <button id="add-health">Add Entry</button>
+    </div>
+
+    <div class="card">
+      <h3>Weekly Health Chart</h3>
+      <button id="toggle-chart" class="chart-toggle-btn">Show Weekly Chart</button>
+      <div id="chart-container" class="collapsed">
+        <canvas id="healthChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Health Tips</h3>
+      <div id="tips-box">Log your health to get tips!</div>
+      <ul id="tips-list" class="tip-list" aria-live="polite"></ul>
+    </div>
+  </section>
+</main>
+
+<button class="voice-button">🎤</button>
+
+<script src="auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ===== Health Tracker Backend Logic =====
+  const waterCard = document.getElementById('water-card');
+  const sleepCard = document.getElementById('sleep-card');
+  const exerciseCard = document.getElementById('exercise-card');
+  const tipsBox = document.getElementById('tips-box');
+  const addBtn = document.getElementById('add-health');
+
+  const API_BASE = '/api/health'; // backend endpoint (relative so same-origin deploy works)
+
+  // Add new health entry
+  addBtn.addEventListener('click', async () => {
+    const water = parseInt(document.getElementById('water-input').value);
+    const sleep = parseInt(document.getElementById('sleep-input').value);
+    const exercise = parseInt(document.getElementById('exercise-input').value);
+
+    if(!water && !sleep && !exercise){
+      alert('Please enter at least one value');
+      return;
+    }
+
+    try{
+      const res = await fetch(API_BASE, {
+          method:'POST',
+          headers: Object.assign({'Content-Type':'application/json'}, getAuthHeader()),
+          body: JSON.stringify({water, sleep, exercise})
+        });
+      const data = await res.json();
+      // show a brief confirmation
+      tipsBox.textContent = data.message || 'Saved';
+      // save to local cache as well
+      saveEntryLocally({ water, sleep, exercise, date: new Date().toISOString() });
+      setTimeout(() => loadHealth(), 700);
+    } catch(err){
+      console.error(err);
+      // If server is unreachable, store the entry locally so tips and charts still update
+      saveEntryLocally({ water, sleep, exercise, date: new Date().toISOString(), offline:true });
+      tipsBox.textContent = 'Saved locally (offline). Will sync when online.';
+      setTimeout(() => loadHealth(0), 700);
+    }
+  });
+
+  // Local storage helpers for offline fallback
+  function saveEntryLocally(entry){
+    try{
+      const arr = JSON.parse(localStorage.getItem('healthEntries') || '[]');
+      arr.push(entry);
+      localStorage.setItem('healthEntries', JSON.stringify(arr));
+    }catch(e){ console.error('local save failed', e); }
+  }
+
+  function getLocalEntries(){
+    try{ return JSON.parse(localStorage.getItem('healthEntries') || '[]'); }
+    catch(e){ return []; }
+  }
+
+  // Load health data with retry logic
+  async function loadHealth(retries = 3) {
+    tipsBox.textContent = 'Loading health data...';
+    try{
+      const res = await fetch(API_BASE, { headers: getAuthHeader() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const entries = await res.json();
+
+      let totalWater=0, totalSleep=0, totalExercise=0;
+      const last7daysData = {water:[], sleep:[], exercise:[]};
+      const daysLabels=[];
+      for(let i=0;i<7;i++){
+        const d=new Date(); d.setDate(d.getDate()-i);
+        daysLabels.unshift(d.toLocaleDateString('en-US',{weekday:'short'}));
+        last7daysData.water.push(0);
+        last7daysData.sleep.push(0);
+        last7daysData.exercise.push(0);
+      }
+
+      const last7days = new Date(); last7days.setDate(last7days.getDate()-6);
+
+      entries.forEach(e=>{
+        const entryDate = new Date(e.date);
+        if(entryDate >= last7days){
+          const index = 6 - Math.floor((new Date() - entryDate)/(1000*60*60*24));
+          last7daysData.water[index] += e.water || 0;
+          last7daysData.sleep[index] += e.sleep || 0;
+          last7daysData.exercise[index] += e.exercise || 0;
+        }
+        totalWater += e.water || 0;
+        totalSleep += e.sleep || 0;
+        totalExercise += e.exercise || 0;
+      });
+
+      waterCard.textContent = `Water: ${totalWater} Glasses`;
+      sleepCard.textContent = `Sleep: ${totalSleep} hrs`;
+      exerciseCard.textContent = `Exercise: ${totalExercise} mins`;
+
+      renderChart(daysLabels, last7daysData);
+      renderTips(totalWater, totalSleep, totalExercise);
+      tipsBox.textContent = ''; // clear loading
+
+    } catch(err){
+      console.error('loadHealth error:', err);
+      if (retries > 0) {
+        tipsBox.textContent = `Retrying to load data... (${retries})`;
+        setTimeout(() => loadHealth(retries - 1), 1500);
+        return;
+      }
+
+      // Final fallback: use locally cached entries so tips and chart still show something
+      const local = getLocalEntries();
+      if(local && local.length){
+        tipsBox.textContent = 'Using offline data. Some entries may not be synced yet.';
+
+        // compute totals and last7days from local entries
+        const entries = local.map(e => ({
+          water: e.water || 0,
+          sleep: e.sleep || 0,
+          exercise: e.exercise || 0,
+          date: e.date || new Date().toISOString()
+        }));
+
+        // reuse code from success path to compute totals & chart
+        let totalWater=0, totalSleep=0, totalExercise=0;
+        const last7daysData = {water:[], sleep:[], exercise:[]};
+        const daysLabels=[];
+        for(let i=0;i<7;i++){
+          const d=new Date(); d.setDate(d.getDate()-i);
+          daysLabels.unshift(d.toLocaleDateString('en-US',{weekday:'short'}));
+          last7daysData.water.push(0);
+          last7daysData.sleep.push(0);
+          last7daysData.exercise.push(0);
+        }
+        const last7days = new Date(); last7days.setDate(last7days.getDate()-6);
+        entries.forEach(e=>{
+          const entryDate = new Date(e.date);
+          if(entryDate >= last7days){
+            const index = 6 - Math.floor((new Date() - entryDate)/(1000*60*60*24));
+            if(index>=0 && index<7){
+              last7daysData.water[index] += e.water || 0;
+              last7daysData.sleep[index] += e.sleep || 0;
+              last7daysData.exercise[index] += e.exercise || 0;
+            }
+          }
+          totalWater += e.water || 0;
+          totalSleep += e.sleep || 0;
+          totalExercise += e.exercise || 0;
+        });
+
+        waterCard.textContent = `Water: ${totalWater} Glasses`;
+        sleepCard.textContent = `Sleep: ${totalSleep} hrs`;
+        exerciseCard.textContent = `Exercise: ${totalExercise} mins`;
+
+        renderChart(daysLabels, last7daysData);
+        renderTips(totalWater, totalSleep, totalExercise);
+        return;
+      }
+
+      // No cached data — still show generic tips
+      tipsBox.textContent = 'Failed to load health data. Showing general tips.';
+      renderTips(0,0,0);
+    }
+  }
+
+  // Render Chart
+  function renderChart(labels,data){
+    const ctx = document.getElementById('healthChart').getContext('2d');
+    if(window.healthChart && typeof window.healthChart.destroy === 'function') window.healthChart.destroy();
+    window.healthChart = new Chart(ctx,{
+      type:'line',
+      data:{
+        labels: labels,
+        datasets:[
+          {label:'Water (Glasses)', data:data.water, borderColor:'#00B894', backgroundColor:'rgba(0,184,148,0.08)', fill:true, tension:0.3},
+          {label:'Sleep (Hrs)', data:data.sleep, borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.06)', fill:true, tension:0.3},
+          {label:'Exercise (Mins)', data:data.exercise, borderColor:'#FD79A8', backgroundColor:'rgba(253,121,168,0.06)', fill:true, tension:0.3}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{display:true}},
+        scales:{y:{beginAtZero:true}},
+        animation: { duration: 800, easing: 'easeOutQuart' }
+      }
+    });
+  }
+
+  // Render Health Tips
+  function renderTips(water, sleep, exercise){
+    const tips = [];
+    if(water<8) tips.push({id:'water', text:'Drink more water to stay hydrated.', detail:'Aim for at least 8 glasses (~2 liters) spread across the day.'});
+    if(sleep<7) tips.push({id:'sleep', text:'Try to get at least 7 hours of sleep.', detail:'Maintain a consistent sleep schedule and wind down 30 mins before bed.'});
+    if(exercise<30) tips.push({id:'exercise', text:'Include at least 30 mins of exercise.', detail:'Combine cardio and strength; even a brisk walk counts.'});
+
+    const tipsList = document.getElementById('tips-list');
+    tipsList.innerHTML = '';
+    const doneMap = JSON.parse(localStorage.getItem('healthTipsDone') || '{}');
+
+    if(tips.length === 0){
+      tipsBox.textContent='Great job! Keep maintaining your health.';
+      return;
+    }
+
+    tips.forEach(t => {
+      const li = document.createElement('li');
+      li.className = 'tip-item';
+      if(doneMap[t.id]) li.classList.add('tip-done');
+
+      const span = document.createElement('div');
+      span.className = 'tip-text';
+      span.textContent = t.text;
+
+      const actions = document.createElement('div');
+      actions.className = 'tip-actions';
+
+      const detailsBtn = document.createElement('button');
+      detailsBtn.className = 'tip-btn details';
+      detailsBtn.textContent = 'Details';
+      detailsBtn.dataset.detail = t.detail;
+
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'tip-btn done';
+      doneBtn.textContent = doneMap[t.id] ? 'Undo' : 'Done';
+      doneBtn.dataset.tipId = t.id;
+
+      const detailDiv = document.createElement('div');
+      detailDiv.className = 'tip-detail';
+      detailDiv.style.display = 'none';
+      detailDiv.style.marginTop = '6px';
+      detailDiv.style.fontSize = '13px';
+      detailDiv.style.opacity = '0.9';
+      detailDiv.textContent = t.detail;
+
+      actions.appendChild(detailsBtn);
+      actions.appendChild(doneBtn);
+      li.appendChild(span);
+      li.appendChild(actions);
+      li.appendChild(detailDiv);
+
+      tipsList.appendChild(li);
+    });
+
+    // Brief hint in tipsBox
+    tipsBox.textContent = 'Here are a few suggestions — mark them as done when completed.';
+  }
+
+  // Tips list event handling (delegation)
+  document.addEventListener('click', (e) => {
+    const detailsBtn = e.target.closest('.tip-btn.details');
+    const doneBtn = e.target.closest('.tip-btn.done');
+    if(detailsBtn){
+      const li = detailsBtn.closest('.tip-item');
+      const detailDiv = li.querySelector('.tip-detail');
+      detailDiv.style.display = detailDiv.style.display === 'none' ? 'block' : 'none';
+      return;
+    }
+    if(doneBtn){
+      const tipId = doneBtn.dataset.tipId;
+      const li = doneBtn.closest('.tip-item');
+      const doneMap = JSON.parse(localStorage.getItem('healthTipsDone') || '{}');
+      if(doneMap[tipId]) { delete doneMap[tipId]; li.classList.remove('tip-done'); doneBtn.textContent = 'Done'; }
+      else { doneMap[tipId] = true; li.classList.add('tip-done'); doneBtn.textContent = 'Undo'; }
+      localStorage.setItem('healthTipsDone', JSON.stringify(doneMap));
+      return;
+    }
+  });
+
+  // Chart toggle behavior
+  const toggleBtn = document.getElementById('toggle-chart');
+  const chartContainer = document.getElementById('chart-container');
+  toggleBtn.addEventListener('click', () => {
+    const expanded = chartContainer.classList.toggle('expanded');
+    toggleBtn.textContent = expanded ? 'Hide Weekly Chart' : 'Show Weekly Chart';
+    if(expanded){
+      // ensure chart is rendered/animated when made visible
+      if(window.healthChart) window.healthChart.update();
+    }
+  });
+
+  // Load data on page load
+  loadHealth();
+
+  // ===== Voice Interaction =====
+  const voiceBtn=document.querySelector('.voice-button');
+  const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(recognition){
+    const rec=new recognition(); rec.continuous=false; rec.lang='en-US';
+    voiceBtn.addEventListener('click',()=>{rec.start(); voiceBtn.innerHTML='🎙️';});
+    rec.onresult=(event)=>{
+      const text=event.results[0][0].transcript.toLowerCase();
+      const match=text.match(/water (\\d+)|sleep (\\d+)|exercise (\\d+)/g);
+      if(match){
+        match.forEach(m=>{
+          if(m.includes('water')) document.getElementById('water-input').value=m.match(/\\d+/)[0];
+          if(m.includes('sleep')) document.getElementById('sleep-input').value=m.match(/\\d+/)[0];
+          if(m.includes('exercise')) document.getElementById('exercise-input').value=m.match(/\\d+/)[0];
+        });
+        addBtn.click();
+      }
+      // show subtle feedback rather than alert
+      tipsBox.textContent = `You said: ${text}`;
+      setTimeout(()=>{ if (tipsBox.textContent && tipsBox.textContent.startsWith('You said:')) tipsBox.textContent = ''; }, 1500);
+      voiceBtn.innerHTML='🎤';
+    };
+    rec.onerror=(e)=>{console.error(e.error); voiceBtn.innerHTML='🎤';};
+    rec.onend=()=>{voiceBtn.innerHTML='🎤';};
+  }else{console.warn('Speech Recognition not supported');}
+});
+</script>
+</body>
+</html>

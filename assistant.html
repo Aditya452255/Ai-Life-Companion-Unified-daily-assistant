@@ -1,0 +1,166 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Life Companion - Assistant</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  display:flex;
+  background: linear-gradient(-45deg,#fbc2eb,#a6c1ee,#fccb90,#d9a7c7);
+  background-size:400% 400%;
+  animation: GradientBG 25s ease infinite;
+  color:black;
+}
+@keyframes GradientBG {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+.sidebar {
+  width:250px;
+  background: rgba(0,0,0,0.5);
+  color:black;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
+  backdrop-filter: blur(8px);
+}
+.sidebar .logo { display:flex; align-items:center; margin-bottom:30px; }
+.sidebar .logo .mark { font-size:32px; font-weight:bold; margin-right:10px; color:#ffd700; }
+.sidebar .nav a { display:block; padding:12px; margin:10px 0; color:black; text-decoration:none; border-radius:8px; transition:0.3s; }
+.sidebar .nav a:hover, .sidebar .nav a.active { background-color: rgba(0,0,0,0.1); transform:translateX(5px); }
+.main-content { flex:1; display:flex; flex-direction:column; overflow-y:hidden; padding:20px; }
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .topbar input { flex:1; padding:10px 15px; border-radius:25px; border:none; outline:none; margin-right:20px; }
+  .topbar .topbar-message { flex:1; padding:10px 15px; border-radius:25px; margin-right:20px; display:flex; align-items:center; color:black; background:rgba(255,255,255,0.06); }
+.topbar .user-profile { font-weight:bold; color:black; }
+.hero { padding:20px; border-radius:15px; background: rgba(255,255,255,0.15); margin-bottom:20px; backdrop-filter:blur(5px); color:black; text-align:center; }
+.hero h1 { font-size:28px; margin-bottom:5px; }
+.hero p { margin-bottom:15px; }
+.chat-container { flex:1; background: rgba(255,255,255,0.2); border-radius:15px; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+.chat-message { max-width:70%; padding:10px 15px; border-radius:15px; box-shadow:0 4px 10px rgba(0,0,0,0.2); animation: fadeIn 0.5s ease forwards; opacity:0; }
+.chat-message.user { background: rgba(255,255,255,0.25); align-self:flex-end; }
+.chat-message.assistant { background: rgba(0,0,0,0.25); color:white; align-self:flex-start; }
+@keyframes fadeIn { 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
+.chat-input-container { display:flex; margin-top:10px; }
+.chat-input-container input { flex:1; padding:12px 15px; border-radius:25px; border:none; outline:none; }
+.chat-input-container button { margin-left:10px; padding:12px 20px; border:none; border-radius:25px; background:linear-gradient(135deg,#74b9ff,#ff7675); color:white; cursor:pointer; transition:0.3s; }
+.chat-input-container button:hover { transform:scale(1.05); }
+.mic-button { position:fixed; bottom:30px; right:30px; background:linear-gradient(135deg,#ff7675,#74b9ff); border:none; border-radius:50%; width:60px; height:60px; cursor:pointer; color:white; font-size:28px; display:flex; justify-content:center; align-items:center; box-shadow:0 4px 15px rgba(0,0,0,0.3); transition:0.3s; }
+.mic-button:hover { transform:scale(1.1); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo"><div class="mark">AI</div><div><div class="title">Life Companion</div><div class="subtitle">Daily AI Helper</div></div></div>
+  <nav class="nav">
+    <a href="index.html">🏠 Dashboard</a>
+    <a href="expenses.html">💸 Expenses</a>
+    <a href="health.html">❤️ Health</a>
+    <a href="recipes.html">🍳 Recipes</a>
+    <a href="music.html">🎵 Music</a>
+    <a href="assistant.html" class="active">🗣️ Assistant</a>
+  </nav>
+</aside>
+
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-message">Your everyday assistant—always here, always ready.</div>
+    <div class="user-profile" data-default="recipeis heart"></div>
+  </header>
+
+  <section class="hero">
+    <h1>AI Assistant</h1>
+    <p>Type or speak to get instant help with daily tasks, reminders, or general queries.</p>
+  </section>
+
+  <div class="chat-container" id="messages">
+    <!-- Chat messages appear here -->
+  </div>
+
+  <div class="chat-input-container">
+    <input type="text" id="input" placeholder="Type your message here...">
+    <button onclick="sendMessage()">Send</button>
+    <button id="clear-chat-btn" style="margin-left:8px;background:#fff;color:#333;padding:8px 12px;border-radius:8px;border:none;display:none;">Clear</button>
+  </div>
+</main>
+
+<button class="mic-button" onclick="startVoiceInput()"><i class="fa-solid fa-microphone"></i></button>
+
+<script>
+// Simple in-page voice assistant (mock responses). Uses current IDs: #messages and #input
+function getAIResponse(message) {
+  const msg = message.toLowerCase();
+  if(msg.includes('hello')||msg.includes('hi')) return "Hello! How can I help you today?";
+  if(msg.includes('weather')) return "It's sunny and 25°C today!";
+  if(msg.includes('time')) return `Current time is ${new Date().toLocaleTimeString()}`;
+  if(msg.includes('reminder')) return "Sure! I can remind you about tasks later.";
+  return "I'm here to assist you with your daily tasks!";
+}
+
+// Send message from input box
+function sendMessage(){
+  const input = document.getElementById('input');
+  const text = (input && input.value || '').trim();
+  if(!text) return;
+  displayMessage(text, 'user');
+  input.value = '';
+  setTimeout(()=>{
+    const response = getAIResponse(text);
+    displayMessage(response, 'assistant');
+    speakText(response);
+  }, 500);
+}
+
+// Display message in chat
+function displayMessage(text, sender){
+  const container = document.getElementById('messages');
+  if(!container) return;
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'chat-message ' + (sender === 'user' ? 'user' : 'assistant');
+  msgDiv.innerText = text;
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Voice input using Web Speech API
+function startVoiceInput(){
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRec){ alert('Your browser does not support voice recognition.'); return; }
+  const recognition = new SpeechRec();
+  recognition.lang = 'en-US';
+  recognition.start();
+  recognition.onresult = function(event){
+    const transcript = event.results[0][0].transcript;
+    displayMessage(transcript, 'user');
+    const response = getAIResponse(transcript);
+    displayMessage(response, 'assistant');
+    speakText(response);
+  };
+  recognition.onerror = function(e){ console.error('Speech error', e); };
+}
+
+// Text-to-speech
+function speakText(text){
+  if('speechSynthesis' in window){
+    const utter = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+// Wire input Enter key
+document.addEventListener('keydown', function(e){
+  const input = document.getElementById('input');
+  if(!input) return;
+  if(e.key === 'Enter' && document.activeElement === input){ e.preventDefault(); sendMessage(); }
+});
+</script>
+
+</body>
+</html>
